@@ -2,7 +2,6 @@ pub mod lights {
 
     use regex::Regex;
     use std::fmt;
-    use std::ops::Not;
 
     const CG_INSTRUCTION: usize = 1;
     const CG_LOCATIONS: usize = 2;
@@ -67,7 +66,7 @@ pub mod lights {
     }
 
     impl LightGrid {
-        pub fn PrettyPrint(&self) {
+        pub fn _pretty_print(&self) {
             for strand in self.grid.iter() {
                 for bulb in strand.iter() {
                     print!("{}", bulb);
@@ -75,7 +74,7 @@ pub mod lights {
                 println!("");
             }
         }
-        pub fn NumberOn(&self) -> u32 {
+        pub fn number_on(&self) -> u32 {
             let mut count = 0;
             for strand in self.grid.iter() {
                 for bulb in strand.iter() {

@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 
+anyhow = "1"
 regex = "1"
-ndarray = "0.13.0"
