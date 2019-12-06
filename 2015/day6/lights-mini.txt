@@ -1,0 +1,2 @@
+turn on 2,1 through 7,9
+toggle 2,1 through 6,5
