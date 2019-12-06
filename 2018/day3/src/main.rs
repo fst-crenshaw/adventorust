@@ -1,7 +1,9 @@
+use anyhow::{anyhow, Result};
 use regex::Regex;
 use std::fs;
 
 #[derive(Default)] // If we derive the Default Trait here...declaration is easier.
+/// The Elves need to make Santa a special suit from special fabric.
 pub struct Fabric {
     pub inches: [[u32; 10]; 10], // This could be a vector!  :)
 }
@@ -17,21 +19,31 @@ impl Fabric {
     }
 }
 
+///   Given a piece of fabric and a string containing a collection of claims,
+///   parse the string and indicate on the fabric how many claims are asking
+///   for each square inch of fabric.
+///
+///   Note that a claim looks like:
+///     `#1 @ 179,662: 16x27`
+///
+///    Or more generically:
+///     `<id>` `@` `top-x`,`top-y`: `width`x`length`
+pub fn process(fabric: &mut Fabric, s: &str) -> Result<()> {
     // There are two crates called anyhow and thiserror.  If you were to put
     // a
     let re = Regex::new(r".?@ (\d{1,3}),(\d{1,3}): (\d{1,3})x(\d{1,3})")?;
 
     for claim in s.split("\n") {
-        // Note that a claim looks like:
-        // #1 @ 179,662: 16x27
-        let cap = re.captures(claim).unwrap();
-        let x: usize = cap[1].parse().unwrap();
-        let y: usize = cap[2].parse().unwrap();
-        let width: usize = cap[3].parse().unwrap();
-        let height: usize = cap[4].parse().unwrap();
+        // The captures method returns an option, so one cannot use the ?
+        // operator on it directly.  Instead, use the ok_or method to convert
+        // an option into the kind of return value this process function
+        // needs to return.
+        let cap = re.captures(claim).ok_or(anyhow!("invalid claim string"))?;
 
-        // println!("x: {:?}, y: {:?}, width: {:?}, height {:?}", &cap[1], &cap[2], &cap[3], &cap[4]);
-        // println!("x: {:?}, y: {:?}, width: {:?}, height {:?}", x, y, width, height);
+        let x: usize = cap[1].parse()?;
+        let y: usize = cap[2].parse()?;
+        let width: usize = cap[3].parse()?;
+        let height: usize = cap[4].parse()?;
 
         for i in x..x + width {
             for j in y..y + height {
@@ -39,16 +51,15 @@ impl Fabric {
             }
         }
     }
-
-fabric.pretty_print();
+    Ok(())
+}
 
 // Rust offers the ability to derive Traits.  Let's say we'd like to
 // compare one Fabric to another Fabric
 //#[derive(PartialOrd)]
 
-fn main() -> std::io::Result<()> {
-    // Change main to return a result.
-
+// Change main to return a result from the anyhow crate.
+fn main() -> Result<()> {
     // Is this the most concise way to read a file into a string?
     // There might be another function that you could call that's lines() that
     // might prevent you from reading it all in at once; instead you could
@@ -79,9 +90,11 @@ fn main() -> std::io::Result<()> {
     // since the concepts are approachable and the code is well-written.
 
     // It's better to get out of main quickly.
-    // Call something like "dothestuff" function
-    
+    // Call something like "dothestuff" function. Let's move our code
+    // into a function and move the error conversion up a level.
+    process(&mut fabric, s)?;
 
+    fabric.pretty_print();
 
     // This wraps nothing inside of an Ok.  To specify a nothing object,
     // one uses ().  The thing that is okay is nothing, which isn't
