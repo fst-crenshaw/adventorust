@@ -1,0 +1,5 @@
+123 -> x
+456 -> y
+NOT x -> h
+NOT y -> i
+i AND h -> z
