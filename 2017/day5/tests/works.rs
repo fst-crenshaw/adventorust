@@ -1,4 +1,4 @@
-use aoc2017_day5::foo;
+use day5::foo;
 
 #[test]
 fn it_might_work() {
@@ -12,5 +12,5 @@ fn left_bounds() {
 
 #[test]
 fn it_works() {
-    assert_eq!(foo("tests/fixtures/input.txt"), 5);
+    assert_eq!(foo("tests/fixtures/input.txt"), 358131);
 }

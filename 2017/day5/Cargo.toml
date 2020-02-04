@@ -1,5 +1,5 @@
 [package]
-name = "aoc2017-day5"
+name = "day5"
 version = "0.1.0"
 authors = ["data-pup <16364986+data-pup@users.noreply.github.com>"]
 edition = "2018"
