@@ -25,15 +25,6 @@ fn main() -> Result<(), Error> {
         let module_mass = module_mass.parse::<u32>().unwrap() / 3;
         let module_mass = module_mass.checked_sub(2)?;
         total = total + module_mass;
-        /*
-                match module_mass {
-                    Some(x) => {
-                        total = total + x;
-                        println!("{}", x);
-                    }
-                    None => println!("Error: Too small input!"),
-                }
-        */
     }
 
     println!("Total Mass! : {}", total);
