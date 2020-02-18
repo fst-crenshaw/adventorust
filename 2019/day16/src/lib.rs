@@ -1,17 +1,18 @@
 /// Perform a phase of our FFT process.
 pub fn fft_phase(signal: Vec<i32>) -> Vec<i32> {
-    let mut output_signal = Vec::with_capacity(signal.len());
-    for (i, _) in signal.iter().enumerate() {
-        let repeating_pattern = RepeatingPatternIterator::new(i);
-        let digits = signal.iter();
-        let mut output_digit = 0;
-        for (digit, pattern_element) in digits.zip(repeating_pattern) {
-            output_digit += digit * pattern_element;
-        }
-        output_signal.push(output_digit.abs() % 10);
-    }
-
-    output_signal
+    signal
+        .iter()
+        .enumerate()
+        .map(|(i, _)| RepeatingPatternIterator::new(i))
+        .map(|repeating_pattern| {
+            let mut output_digit = 0;
+            for (digit, pattern_element) in signal.iter().zip(repeating_pattern) {
+                output_digit += digit * pattern_element;
+            }
+            output_digit
+        })
+        .map(|digit| digit.abs() % 10)
+        .collect::<Vec<_>>()
 }
 
 #[cfg(test)]
