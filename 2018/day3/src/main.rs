@@ -3,7 +3,7 @@ use regex::Regex;
 use std::fs;
 
 #[derive(Default)] // If we derive the Default Trait here...declaration is easier.
-/// The Elves need to make Santa a special suit from special fabric.
+/// The Elves need to make Santa a special suit from some special fabric.
 pub struct Fabric {
     pub inches: [[u32; 10]; 10], // This could be a vector!  :)
 }
