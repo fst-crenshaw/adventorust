@@ -32,7 +32,7 @@ fn main() {
                 try_this.push_str(&v.to_string());
 
                 // Compute the digest.
-                let digest = md5::compute(try_this.into_bytes());
+                let digest = md5::compute(try_this);
                 let hex_str = format!("{:x}", digest);
 
                 if hex_str.starts_with("00000") {

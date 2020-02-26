@@ -211,4 +211,26 @@ mod tests {
         let first_eight = &signal_input[0..8];
         assert_eq!(first_eight, [4, 4, 0, 9, 8, 2, 6, 3]);
     }
+
+    #[test]
+    fn try_puzzle_input_in_parts() {
+        // For 100 phases of fft, assert that the output of the final
+        // phase is the value that yields a gold star over at aoc.
+        let s = fs::read_to_string("input.txt").unwrap();
+        let s = s.trim();
+        let mut signal_output;
+
+        let mut signal_input = s
+            .chars()
+            .map(|c| c.to_digit(10).unwrap() as i32)
+            .collect::<Vec<i32>>();
+
+        for _ in 0..100 {
+            signal_output = fft_phase_in_parts(&signal_input);
+            signal_input = signal_output;
+        }
+
+        let first_eight = &signal_input[0..8];
+        assert_eq!(first_eight, [4, 4, 0, 9, 8, 2, 6, 3]);
+    }
 }
