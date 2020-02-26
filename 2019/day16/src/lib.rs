@@ -7,7 +7,7 @@ pub fn fft_phase(signal: &Vec<i32>) -> Vec<i32> {
     signal
         .iter()
         .enumerate()
-        .map(|(i, _)| RepeatingPatternIterator::new(i, 0))
+        .map(|(i, _)| RepeatingPatternIterator::new(i))
         .map(|repeating_pattern| {
             let mut output_digit = 0;
             for (digit, pattern_element) in (*signal).iter().zip(repeating_pattern) {
@@ -28,10 +28,13 @@ pub fn fft_phase_in_parts(signal: &Vec<i32>, start: usize, len: usize) -> Vec<i3
         .enumerate()
         .map(|(i, v)| {
             println!("i = {}, v= {}", i, v);
-            let repeating_pattern = RepeatingPatternIterator::new(i + start, start);
+            let repeating_pattern = RepeatingPatternIterator::new(i + start);
             let mut output_digit = 0;
             for (digit, pattern_element) in (*signal).iter().zip(repeating_pattern) {
-                println!("output_digit ({}) += {} * {}", output_digit, digit, pattern_element);
+                println!(
+                    "output_digit ({}) += {} * {}",
+                    output_digit, digit, pattern_element
+                );
                 output_digit += digit * pattern_element;
             }
             output_digit
@@ -98,10 +101,10 @@ struct RepeatingPatternIterator {
 }
 
 impl RepeatingPatternIterator {
-    fn new(output_signal_idx: usize, pattern_position: usize) -> Self {
+    fn new(output_signal_idx: usize) -> Self {
         Self {
             output_signal_idx,
-            pattern_position: pattern_position % BASE_PATTERN.len(),
+            pattern_position: 0,
             repeat: 0,
         }
     }
@@ -127,7 +130,7 @@ mod tests {
     // repeating sequence of [1, 0, -1, 0, ...]
     #[test]
     fn first_digit() {
-        let x = RepeatingPatternIterator::new(0, 0);
+        let x = RepeatingPatternIterator::new(0);
         let base_vals = x.take(5).collect::<Vec<_>>();
         assert_eq!(base_vals, vec![1, 0, -1, 0, 1]);
     }
@@ -136,7 +139,7 @@ mod tests {
     // repeating sequence of [0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1, 0, ...]
     #[test]
     fn third_digit() {
-        let x = RepeatingPatternIterator::new(2, 0);
+        let x = RepeatingPatternIterator::new(2);
         let base_vals = x.take(15).collect::<Vec<_>>();
         assert_eq!(
             base_vals,
@@ -146,9 +149,9 @@ mod tests {
 
     #[test]
     fn second_half() {
-        let x = RepeatingPatternIterator::new(0, 2);
+        let x = RepeatingPatternIterator::new(2);
         let base_vals = x.take(5).collect::<Vec<_>>();
-        assert_eq!(base_vals, vec![-1, 0, 1, 0, -1]);
+        assert_eq!(base_vals, vec![0, 0, 1, 1, 1,]);
     }
 
     #[test]
