@@ -54,7 +54,7 @@ mod fft_phase_tests {
     }
 
     #[test]
-    fn it_works_with_threads() {
+    fn it_works_in_halves() {
         let signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
         let start = 0;
@@ -71,7 +71,7 @@ mod fft_phase_tests {
     }
 
     #[test]
-    fn it_works_with_threads_two() {
+    fn it_works_lopsided() {
         let signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
         let start = 0;
@@ -85,6 +85,23 @@ mod fft_phase_tests {
 
         assert_eq!(result1, vec![4, 8, 2]);
         assert_eq!(result2, vec![2, 6, 1, 5, 8]);
+    }
+
+    #[test]
+    fn it_works_even_more_lopsided() {
+        let signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        let start = 0;
+        let len = 1;
+        let result1 = fft_phase_in_parts(&signal, start, len);
+
+        println!("done");
+        let start = 1;
+        let len = 7;
+        let result2 = fft_phase_in_parts(&signal, start, len);
+
+        assert_eq!(result1, vec![4]);
+        assert_eq!(result2, vec![8, 2, 2, 6, 1, 5, 8]);
     }
 }
 
