@@ -161,10 +161,6 @@ mod tests {
                 exp: Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Variable("y"))
             })
         );
-    }
-
-    #[test]
-    fn parse_assignment_with_and_with_literal() {
         assert_eq!(
             parse("1 AND y -> d").unwrap(),
             Box::new(Assignment {
@@ -191,10 +187,6 @@ mod tests {
                 exp: Exp::BinaryExp(aoc_or, Term::Variable("x"), Term::Variable("y"))
             })
         );
-    }
-
-    #[test]
-    fn parse_assignment_with_or_with_literal() {
         assert_eq!(
             parse("0 OR y -> e").unwrap(),
             Box::new(Assignment {
