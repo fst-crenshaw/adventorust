@@ -171,6 +171,14 @@ mod tests {
                 exp: Exp::BinaryExp(aoc_and, Term::Literal(1), Term::Variable("y"))
             })
         );
+
+        assert_eq!(
+            parse("x AND 0 -> d").unwrap(),
+            Box::new(Assignment {
+                id: "d",
+                exp: Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Literal(0))
+            })
+        );
     }
 
     #[test]
