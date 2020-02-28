@@ -2,13 +2,15 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 
+/// A term in an expression is one of a variable (like "x") or an
+/// unsigned integer (like 1).
 #[derive(Debug, PartialEq)]
 enum Term<'a> {
     Literal(u32),
     Variable(&'a str),
 }
 
-/// An expression is any of
+/// An expression is any of:
 ///  123
 ///  1 AND y
 ///  x AND y
@@ -49,9 +51,8 @@ fn aoc_not(a: u32) -> u32 {
     return !a;
 }
 
-/// Given a string representing a term in an expression
-/// return its type, either a Variable (like "x") or
-/// a Literal (like 1).
+/// Given a string representing a term in an expression return its
+/// type, either a Variable (like "x") or a Literal (like 1).
 fn reduce<'a>(s: &'a str) -> Term<'a> {
     let term = s.clone();
 
@@ -64,6 +65,8 @@ fn reduce<'a>(s: &'a str) -> Term<'a> {
     }
 }
 
+/// Given a string representing an assignment return its parsed
+/// Assignment structure.
 fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
     let exp;
     let cap;
@@ -108,21 +111,17 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
     return Ok(Box::new(assign));
 }
 
-/// Given an expression, attempt to evaluate it.  If it cannot be
-/// evaluated, return None.
 fn eval(exp: &Exp) -> Option<u32> {
     match exp {
         Exp::Literal(val) => Some(*val),
-        Exp::UnaryExp(f, exp) => match exp.parse() {
-            Ok(val) => Some(f(val)),
-            _ => None,
-        },
+        Exp::UnaryExp(f, Term::Literal(val)) => Some(f(*val)),
+        Exp::BinaryExp(f, Term::Literal(val1), Term::Literal(val2)) => Some(f(*val1, *val2)),
         _ => None,
     }
 }
 
 fn main() {
-    let mut expressions = HashMap::new();
+    //let mut state = HashMap::new();
     //let mut values = HashMap::new();
 
     let s = fs::read_to_string("input_sample.txt").unwrap();
@@ -131,8 +130,10 @@ fn main() {
     for line in s.split('\n') {
         let assignment = parse(line).unwrap();
         println!("{:?}", assignment);
-        expressions.insert(assignment.id, assignment.exp);
+        println!("->{:?}", eval(&assignment.exp));
     }
+
+    //println!("{:?}", state);
 }
 
 #[cfg(test)]
