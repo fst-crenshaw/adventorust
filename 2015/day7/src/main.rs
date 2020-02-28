@@ -15,6 +15,7 @@ enum Term<'a> {
 ///  0 OR x
 ///  x OR 0
 ///  NOT y
+///  NOT 1
 #[derive(Debug, PartialEq)]
 enum Exp<'a> {
     Literal(u32),
@@ -217,6 +218,13 @@ mod tests {
             Box::new(Assignment {
                 id: "e",
                 exp: Exp::UnaryExp(aoc_not, Term::Variable("y"))
+            })
+        );
+        assert_eq!(
+            parse("NOT 1 -> e").unwrap(),
+            Box::new(Assignment {
+                id: "e",
+                exp: Exp::UnaryExp(aoc_not, Term::Literal(1))
             })
         );
     }
