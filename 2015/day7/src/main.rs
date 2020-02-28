@@ -113,12 +113,10 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
 fn eval(exp: &Exp) -> Option<u32> {
     match exp {
         Exp::Literal(val) => Some(*val),
-        /*
-                Exp::UnaryExp(f, exp) => match exp.parse() {
-                    Ok(val) => Some(f(val)),
-                    _ => None,
-                },
-        */
+        Exp::UnaryExp(f, exp) => match exp.parse() {
+            Ok(val) => Some(f(val)),
+            _ => None,
+        },
         _ => None,
     }
 }
