@@ -61,7 +61,6 @@ mod fft_phase_tests {
         let len = 4;
         let result1 = fft_phase_in_parts(&signal, start, len);
 
-        println!("done");
         let start = 4;
         /* len remains 4 */
         let result2 = fft_phase_in_parts(&signal, start, len);
@@ -78,7 +77,6 @@ mod fft_phase_tests {
         let len = 3;
         let result1 = fft_phase_in_parts(&signal, start, len);
 
-        println!("done");
         let start = 3;
         let len = 5;
         let result2 = fft_phase_in_parts(&signal, start, len);
@@ -95,7 +93,6 @@ mod fft_phase_tests {
         let len = 1;
         let result1 = fft_phase_in_parts(&signal, start, len);
 
-        println!("done");
         let start = 1;
         let len = 7;
         let result2 = fft_phase_in_parts(&signal, start, len);
@@ -191,6 +188,28 @@ mod tests {
     }
 
     #[test]
+    fn try_example_in_parts() {
+        // For four phases of fft, assert that the output of each
+        // phase is correct with respect to the expected value.
+        let mut signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
+        let expected_signal_outputs: Vec<Vec<i32>> = vec![
+            vec![4, 8, 2, 2, 6, 1, 5, 8],
+            vec![3, 4, 0, 4, 0, 4, 3, 8],
+            vec![0, 3, 4, 1, 5, 5, 1, 8],
+            vec![0, 1, 0, 2, 9, 4, 9, 8],
+        ];
+
+        for v in expected_signal_outputs.iter() {
+            let _signal_output_front = fft_phase_in_parts(&signal, 0, 4);
+            let _signal_output_back = fft_phase_in_parts(&signal, 4, 4);
+            let mut _signal_output = _signal_output_front;
+            _signal_output.extend(_signal_output_back);
+            assert_eq!(_signal_output, *v);
+            signal = _signal_output;
+        }
+    }
+
+    #[test]
     fn try_puzzle_input() {
         // For 100 phases of fft, assert that the output of the final
         // phase is the value that yields a gold star over at aoc.
@@ -226,10 +245,13 @@ mod tests {
             .map(|c| c.to_digit(10).unwrap() as i32)
             .collect::<Vec<i32>>();
 
+        // How big is the input?
+        let half = signal_input.len() / 2;
+
         for _ in 0..100 {
-            signal_output_front = fft_phase_in_parts(&signal_input, 0, 4);
-            signal_output_back = fft_phase_in_parts(&signal_input, 0, 4);
-            signal_output_front.extend(&signal_output_back);
+            signal_output_front = fft_phase_in_parts(&signal_input, 0, half);
+            signal_output_back = fft_phase_in_parts(&signal_input, half, half * 2);
+            signal_output_front.extend(signal_output_back);
             signal_input = signal_output_front;
         }
 
