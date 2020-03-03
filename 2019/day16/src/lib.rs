@@ -7,7 +7,7 @@ pub fn fft_phase(signal: &Vec<i32>) -> Vec<i32> {
     signal
         .iter()
         .enumerate()
-        .map(|(i, _)| RepeatingPatternIterator::new(i))
+        .map(|(i, _)| PatternMaker::new(i))
         .map(|repeating_pattern| {
             let mut output_digit = 0;
             for (digit, pattern_element) in (*signal).iter().zip(repeating_pattern) {
@@ -28,7 +28,7 @@ pub fn fft_phase_in_parts(signal: &Vec<i32>, start: usize, len: usize) -> Vec<i3
         .enumerate()
         .map(|(i, v)| {
             println!("i = {}, v= {}", i, v);
-            let repeating_pattern = RepeatingPatternIterator::new(i + start);
+            let repeating_pattern = PatternMaker::new(i + start);
             let mut output_digit = 0;
             for (digit, pattern_element) in (*signal).iter().zip(repeating_pattern) {
                 println!(
@@ -108,7 +108,7 @@ mod fft_phase_tests {
 const BASE_PATTERN: [i32; 4] = [0, 1, 0, -1];
 
 #[derive(Debug)]
-struct RepeatingPatternIterator {
+struct PatternMaker {
     /// The position in the signal. (0-based index)
     output_signal_idx: usize,
     /// The position in the base repeating pattern.
@@ -117,7 +117,7 @@ struct RepeatingPatternIterator {
     repeat: usize,
 }
 
-impl RepeatingPatternIterator {
+impl PatternMaker {
     fn new(output_signal_idx: usize) -> Self {
         Self {
             output_signal_idx,
@@ -127,7 +127,7 @@ impl RepeatingPatternIterator {
     }
 }
 
-impl Iterator for RepeatingPatternIterator {
+impl Iterator for PatternMaker {
     type Item = i32;
     fn next(&mut self) -> Option<Self::Item> {
         self.repeat += 1;
@@ -147,7 +147,7 @@ mod tests {
     // repeating sequence of [1, 0, -1, 0, ...]
     #[test]
     fn first_digit() {
-        let x = RepeatingPatternIterator::new(0);
+        let x = PatternMaker::new(0);
         let base_vals = x.take(5).collect::<Vec<_>>();
         assert_eq!(base_vals, vec![1, 0, -1, 0, 1]);
     }
@@ -156,7 +156,7 @@ mod tests {
     // repeating sequence of [0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1, 0, ...]
     #[test]
     fn third_digit() {
-        let x = RepeatingPatternIterator::new(2);
+        let x = PatternMaker::new(2);
         let base_vals = x.take(15).collect::<Vec<_>>();
         assert_eq!(
             base_vals,
@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn second_half() {
-        let x = RepeatingPatternIterator::new(2);
+        let x = PatternMaker::new(2);
         let base_vals = x.take(5).collect::<Vec<_>>();
         assert_eq!(base_vals, vec![0, 0, 1, 1, 1,]);
     }
@@ -218,7 +218,8 @@ mod tests {
         // phase is the value that yields a gold star over at aoc.
         let s = fs::read_to_string("input.txt").unwrap();
         let s = s.trim();
-        let mut signal_output;
+        let mut signal_output_front;
+        let mut signal_output_back;
 
         let mut signal_input = s
             .chars()
@@ -226,8 +227,10 @@ mod tests {
             .collect::<Vec<i32>>();
 
         for _ in 0..100 {
-            signal_output = fft_phase_in_parts(&signal_input);
-            signal_input = signal_output;
+            signal_output_front = fft_phase_in_parts(&signal_input, 0, 4);
+            signal_output_back = fft_phase_in_parts(&signal_input, 0, 4);
+            signal_output_front.extend(&signal_output_back);
+            signal_input = signal_output_front;
         }
 
         let first_eight = &signal_input[0..8];
