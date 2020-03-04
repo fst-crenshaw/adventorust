@@ -102,24 +102,45 @@ mod fft_phase_tests {
     }
 }
 
+/// The PatternMaker type
+///
 const BASE_PATTERN: [i32; 4] = [0, 1, 0, -1];
 
 #[derive(Debug)]
 struct PatternMaker {
-    /// The position in the signal. (0-based index)
-    output_signal_idx: usize,
-    /// The position in the base repeating pattern.
+    /// A pattern is determined by the desired index.  This index
+    /// value describes how the pattern repeats itself.
+    ///
+    ///   If a calculation is being made for index 0, then the pattern
+    ///   begins (1 0 -1) and then repeats (0 1 0 -1) thereafter.
+    ///
+    ///   If a calculation is being made for index 1, then the pattern begins
+    ///   (0 1 1 0 0 -1 -1) and then repeats (0 0 1 1 0 0 -1 -1) thereafter.
+    index: usize,
+
+    /// The total length of the pattern that repeats.  For example, an
+    /// index 0 pattern has length 4, an index 1 pattern has length 8,
+    /// an index 2 pattern has length 12, and so on.
+    pattern_length: usize,
+
+    /// For implementing an iterator over the pattern, the pattern
+    /// position indicates the position of the pattern that was last
+    /// returned.  For a pattern of index 2, the pattern begins
+    /// 0 0 1 1 1 0 0 0 -1 -1 -1. If the pattern position is 5,
+    /// then the value last returned by an iterator was:
+    ///
+    ///  0 0 1 1 1 0 0 0 -1 -1 -1
+    ///            ^
+    ///            |----- This value, at position 5.
     pattern_position: usize,
-    /// The number of times we have repeated the current number.
-    repeat: usize,
 }
 
 impl PatternMaker {
-    fn new(output_signal_idx: usize) -> Self {
+    fn new(index: usize) -> Self {
         Self {
-            output_signal_idx,
+            index,
+            pattern_length: (index + 1) * 4,
             pattern_position: 0,
-            repeat: 0,
         }
     }
 }
@@ -127,12 +148,15 @@ impl PatternMaker {
 impl Iterator for PatternMaker {
     type Item = i32;
     fn next(&mut self) -> Option<Self::Item> {
-        self.repeat += 1;
-        if self.repeat > self.output_signal_idx {
-            self.repeat = 0;
-            self.pattern_position = (self.pattern_position + 1) % BASE_PATTERN.len();
-        }
-        Some(BASE_PATTERN[self.pattern_position])
+        // The BASE_PATTERN is four values: 0 1 0 -1.  We need to
+        // calculate an index of 0, 1, 2 or 3 into the BASE_PATTERN.
+        let base_pattern_index =
+            ((self.pattern_position + 1) % self.pattern_length) / (self.index + 1);
+
+        // Keep track of where we are in the pattern by incrementing
+        // the position by 1.
+        self.pattern_position = self.pattern_position + 1;
+        Some(BASE_PATTERN[base_pattern_index])
     }
 }
 
