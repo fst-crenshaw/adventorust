@@ -111,7 +111,14 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
     return Ok(Box::new(assign));
 }
 
-fn eval(exp: &Exp) -> Option<u32> {
+fn eval(assign: &Assignment, state: HashMap<&str, u32>) {
+
+    // Attempt to evaluate the expression.  If it returns
+    // None, then we add it to free_vars.  If it returns
+    // Some, then we add it to state.
+}
+
+fn eval_expr(exp: &Exp) -> Option<u32> {
     match exp {
         Exp::Literal(val) => Some(*val),
         Exp::UnaryExp(f, Term::Literal(val)) => Some(f(*val)),
@@ -130,15 +137,49 @@ fn main() {
     for line in s.split('\n') {
         let assignment = parse(line).unwrap();
         println!("{:?}", assignment);
-        println!("->{:?}", eval(&assignment.exp));
+        println!("->{:?}", eval_expr(&assignment.exp));
     }
-
-    //println!("{:?}", state);
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{aoc_and, aoc_not, aoc_or, parse, Assignment, Exp, Term};
+    use crate::{aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, Term};
+
+    #[test]
+    fn eval_assignments() {
+        let mut state = HashMap::new();
+        let mut free_vars = HashMap::new();
+        state.insert("d", 1);
+        free_vars.insert(
+            "e",
+            Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Variable("y")),
+        );
+
+        let mut my_assign;
+
+        my_assign = parse("1 -> x").unwrap();
+        eval(&my_assign, state);
+    }
+
+    #[test]
+    fn eval_expressions() {
+        let mut my_assign;
+
+        my_assign = parse("1 AND 0 -> d").unwrap();
+        assert_eq!(eval_expr(&my_assign.exp), Some(0));
+
+        my_assign = parse("1 AND 1 -> d").unwrap();
+        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+
+        my_assign = parse("0 OR 1 -> d").unwrap();
+        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+
+        my_assign = parse("1 OR 1 -> d").unwrap();
+        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+
+        my_assign = parse("0 OR 0 -> d").unwrap();
+        assert_eq!(eval_expr(&my_assign.exp), Some(0));
+    }
 
     #[test]
     fn parse_simple_assignment() {
