@@ -6,9 +6,9 @@ use std::fs;
 /// and the set of variables whose assigned expressions cannot yet be
 /// evaluated.
 #[derive(Debug)]
-struct State<'a> {
-    known: HashMap<&'a str, u32>,
-    free: HashMap<&'a str, &'a Exp<'a>>,
+struct State {
+    known: HashMap<String, u32>,
+    free: HashMap<String, Exp>,
 }
 
 impl State {
@@ -23,9 +23,9 @@ impl State {
 /// A term in an expression is one of a variable (like "x") or an
 /// unsigned integer (like 1).
 #[derive(Clone, Debug, PartialEq)]
-enum Term<'a> {
+enum Term {
     Literal(u32),
-    Variable(&'a str),
+    Variable(String),
 }
 
 /// An expression is any of:
@@ -37,24 +37,19 @@ enum Term<'a> {
 ///  NOT y
 ///  NOT 1
 #[derive(Clone, Debug, PartialEq)]
-enum Exp<'a> {
+enum Exp {
     Literal(u32),
-    UnaryExp(fn(a: u32) -> u32, Term<'a>),
-    BinaryExp(fn(a: u32, b: u32) -> u32, Term<'a>, Term<'a>),
+    UnaryExp(fn(a: u32) -> u32, Term),
+    BinaryExp(fn(a: u32, b: u32) -> u32, Term, Term),
 }
 
 /// An Assignment is an identifier and an expression.
 ///    i.e., <exp> -> <id>
 ///
 #[derive(Debug, PartialEq)]
-struct Assignment<'a> {
-    id: &'a str,
-    exp: Exp<'a>,
-}
-
-struct BlockSet<'a> {
-    var: &'a str,
-    blocked_by: &'a str,
+struct Assignment {
+    id: String,
+    exp: Exp,
 }
 
 fn aoc_and(a: u32, b: u32) -> u32 {
@@ -71,21 +66,21 @@ fn aoc_not(a: u32) -> u32 {
 
 /// Given a string representing a term in an expression return its
 /// type, either a Variable (like "x") or a Literal (like 1).
-fn reduce<'a>(s: &'a str) -> Term<'a> {
-    let term = s.clone();
+fn reduce<'a>(s: &'a str) -> Term {
+    let term = s.to_string();
 
     // Is it a number?
     let maybe_number = term.parse::<u32>();
 
     match maybe_number {
         Ok(number) => return Term::Literal(number),
-        Err(_) => return Term::Variable(term),
+        Err(_) => return Term::Variable(term.clone()),
     }
 }
 
 /// Given a string representing an assignment return its parsed
 /// Assignment structure.
-fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
+fn parse<'a>(s: &'a str) -> Result<Box<Assignment>, ()> {
     let exp;
     let cap;
 
@@ -123,13 +118,13 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
         exp = Exp::Literal(cap.name("literal").unwrap().as_str().parse().unwrap());
     }
     let assign = Assignment {
-        id: &cap.name("id").unwrap().as_str(),
+        id: cap.name("id").unwrap().as_str().to_string(),
         exp,
     };
     return Ok(Box::new(assign));
 }
 
-fn eval<'a>(assign: &'a Assignment, state: &'a State<'a>) -> &'a State<'a> {
+fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
     // Attempt to evaluate the expression.  If expression evaluation
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
@@ -138,13 +133,11 @@ fn eval<'a>(assign: &'a Assignment, state: &'a State<'a>) -> &'a State<'a> {
 
     match maybe_evaluated_expr {
         Some(e) => {
-            state.known.insert(&assign.id.to_owned(), e);
-            state
+            state.known.insert(assign.id.to_owned(), e);
         }
         None => {
-            let my_exp = &assign.exp.clone();
-            state.free.insert(&assign.id.to_owned(), my_exp);
-            state
+            let my_exp = assign.exp.clone();
+            state.free.insert(assign.id.to_owned(), my_exp);
         }
     }
 }
@@ -171,9 +164,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, State, Term,
-    };
+    use crate::{aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, State, Term};
 
     #[test]
     fn eval_assignments() {
@@ -187,7 +178,7 @@ mod tests {
 
         //free_vars.insert("y", &my_assign.exp);
 
-        //eval(&my_assign, state, free_vars);
+        eval(&my_assign, &mut state);
     }
 
     #[test]
@@ -215,7 +206,7 @@ mod tests {
         assert_eq!(
             parse("123 -> x").unwrap(),
             Box::new(Assignment {
-                id: "x",
+                id: "x".to_owned(),
                 exp: Exp::Literal(123)
             })
         );
@@ -226,23 +217,27 @@ mod tests {
         assert_eq!(
             parse("x AND y -> d").unwrap(),
             Box::new(Assignment {
-                id: "d",
-                exp: Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Variable("y"))
+                id: "d".to_owned(),
+                exp: Exp::BinaryExp(
+                    aoc_and,
+                    Term::Variable("x".to_owned()),
+                    Term::Variable("y".to_owned())
+                )
             })
         );
         assert_eq!(
             parse("1 AND y -> d").unwrap(),
             Box::new(Assignment {
-                id: "d",
-                exp: Exp::BinaryExp(aoc_and, Term::Literal(1), Term::Variable("y"))
+                id: "d".to_owned(),
+                exp: Exp::BinaryExp(aoc_and, Term::Literal(1), Term::Variable("y".to_owned()))
             })
         );
 
         assert_eq!(
             parse("x AND 0 -> d").unwrap(),
             Box::new(Assignment {
-                id: "d",
-                exp: Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Literal(0))
+                id: "d".to_owned(),
+                exp: Exp::BinaryExp(aoc_and, Term::Variable("x".to_owned()), Term::Literal(0))
             })
         );
     }
@@ -252,22 +247,26 @@ mod tests {
         assert_eq!(
             parse("x OR y -> e").unwrap(),
             Box::new(Assignment {
-                id: "e",
-                exp: Exp::BinaryExp(aoc_or, Term::Variable("x"), Term::Variable("y"))
+                id: "e".to_owned(),
+                exp: Exp::BinaryExp(
+                    aoc_or,
+                    Term::Variable("x".to_owned()),
+                    Term::Variable("y".to_owned())
+                )
             })
         );
         assert_eq!(
             parse("0 OR y -> e").unwrap(),
             Box::new(Assignment {
-                id: "e",
-                exp: Exp::BinaryExp(aoc_or, Term::Literal(0), Term::Variable("y"))
+                id: "e".to_owned(),
+                exp: Exp::BinaryExp(aoc_or, Term::Literal(0), Term::Variable("y".to_owned()))
             })
         );
         assert_eq!(
             parse("y OR 0 -> e").unwrap(),
             Box::new(Assignment {
-                id: "e",
-                exp: Exp::BinaryExp(aoc_or, Term::Variable("y"), Term::Literal(0))
+                id: "e".to_owned(),
+                exp: Exp::BinaryExp(aoc_or, Term::Variable("y".to_owned()), Term::Literal(0))
             })
         );
     }
@@ -277,14 +276,14 @@ mod tests {
         assert_eq!(
             parse("NOT y -> e").unwrap(),
             Box::new(Assignment {
-                id: "e",
-                exp: Exp::UnaryExp(aoc_not, Term::Variable("y"))
+                id: "e".to_owned(),
+                exp: Exp::UnaryExp(aoc_not, Term::Variable("y".to_owned()))
             })
         );
         assert_eq!(
             parse("NOT 1 -> e").unwrap(),
             Box::new(Assignment {
-                id: "e",
+                id: "e".to_owned(),
                 exp: Exp::UnaryExp(aoc_not, Term::Literal(1))
             })
         );
