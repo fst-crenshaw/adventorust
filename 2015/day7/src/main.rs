@@ -4,7 +4,7 @@ use std::fs;
 
 /// A term in an expression is one of a variable (like "x") or an
 /// unsigned integer (like 1).
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Term<'a> {
     Literal(u32),
     Variable(&'a str),
@@ -18,7 +18,7 @@ enum Term<'a> {
 ///  x OR 0
 ///  NOT y
 ///  NOT 1
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Exp<'a> {
     Literal(u32),
     UnaryExp(fn(a: u32) -> u32, Term<'a>),
@@ -111,11 +111,28 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
     return Ok(Box::new(assign));
 }
 
-fn eval(assign: &Assignment, state: HashMap<&str, u32>) {
+fn eval<'a, 'b>(
+    assign: &'a Assignment,
+    state: HashMap<&str, u32>,
+    free_vars: HashMap<&str, &'b Exp>,
+) -> Result<(), ()> {
+    // Attempt to evaluate the expression.  If expression evaluation
+    // returns None, then we add the expression to the set of free
+    // variables.  If expression evaluation returns Some(_) then we
+    // add it to known program state.
+    let maybe_evaluated_expr: Option<u32> = eval_expr(&assign.exp);
 
-    // Attempt to evaluate the expression.  If it returns
-    // None, then we add it to free_vars.  If it returns
-    // Some, then we add it to state.
+    match maybe_evaluated_expr {
+        Some(e) => {
+            state.insert(&assign.id.to_owned(), e);
+            Ok(())
+        }
+        None => {
+            let my_exp = &assign.exp.clone();
+            free_vars.insert(&assign.id.to_owned(), my_exp);
+            Ok(())
+        }
+    }
 }
 
 fn eval_expr(exp: &Exp) -> Option<u32> {
@@ -128,9 +145,6 @@ fn eval_expr(exp: &Exp) -> Option<u32> {
 }
 
 fn main() {
-    //let mut state = HashMap::new();
-    //let mut values = HashMap::new();
-
     let s = fs::read_to_string("input_sample.txt").unwrap();
     let s = s.trim();
 
@@ -150,15 +164,14 @@ mod tests {
         let mut state = HashMap::new();
         let mut free_vars = HashMap::new();
         state.insert("d", 1);
-        free_vars.insert(
-            "e",
-            Exp::BinaryExp(aoc_and, Term::Variable("x"), Term::Variable("y")),
-        );
 
         let mut my_assign;
 
         my_assign = parse("1 -> x").unwrap();
-        eval(&my_assign, state);
+
+        free_vars.insert("y", &my_assign.exp);
+
+        eval(&my_assign, state, free_vars);
     }
 
     #[test]
