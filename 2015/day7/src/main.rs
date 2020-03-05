@@ -2,6 +2,24 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 
+/// The program state is the set of variables whose values are known
+/// and the set of variables whose assigned expressions cannot yet be
+/// evaluated.
+#[derive(Debug)]
+struct State<'a> {
+    known: HashMap<&'a str, u32>,
+    free: HashMap<&'a str, &'a Exp<'a>>,
+}
+
+impl State {
+    fn new() -> Self {
+        Self {
+            known: HashMap::new(),
+            free: HashMap::new(),
+        }
+    }
+}
+
 /// A term in an expression is one of a variable (like "x") or an
 /// unsigned integer (like 1).
 #[derive(Clone, Debug, PartialEq)]
@@ -111,11 +129,7 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment<'a>>, ()> {
     return Ok(Box::new(assign));
 }
 
-fn eval<'a, 'b>(
-    assign: &'a Assignment,
-    state: HashMap<&str, u32>,
-    free_vars: HashMap<&str, &'b Exp>,
-) -> Result<(), ()> {
+fn eval<'a>(assign: &'a Assignment, state: &'a State<'a>) -> &'a State<'a> {
     // Attempt to evaluate the expression.  If expression evaluation
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
@@ -124,13 +138,13 @@ fn eval<'a, 'b>(
 
     match maybe_evaluated_expr {
         Some(e) => {
-            state.insert(&assign.id.to_owned(), e);
-            Ok(())
+            state.known.insert(&assign.id.to_owned(), e);
+            state
         }
         None => {
             let my_exp = &assign.exp.clone();
-            free_vars.insert(&assign.id.to_owned(), my_exp);
-            Ok(())
+            state.free.insert(&assign.id.to_owned(), my_exp);
+            state
         }
     }
 }
@@ -157,21 +171,23 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, Term};
+    use crate::{
+        aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, State, Term,
+    };
 
     #[test]
     fn eval_assignments() {
-        let mut state = HashMap::new();
-        let mut free_vars = HashMap::new();
-        state.insert("d", 1);
+        let mut state = State::new();
+
+        // state.insert("d", 1);
 
         let mut my_assign;
 
         my_assign = parse("1 -> x").unwrap();
 
-        free_vars.insert("y", &my_assign.exp);
+        //free_vars.insert("y", &my_assign.exp);
 
-        eval(&my_assign, state, free_vars);
+        //eval(&my_assign, state, free_vars);
     }
 
     #[test]
