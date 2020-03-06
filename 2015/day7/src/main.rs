@@ -201,7 +201,7 @@ mod tests {
         a2 = parse("y AND x -> a").unwrap();
         assert_eq!(Ordering::Less, a1.cmp(&a2));
 
-        a1 = parse("1 AND x -> a").unwrap();
+        a1 = parse("1 AND x -> c").unwrap();
         a2 = parse("y AND x -> a").unwrap();
         assert_eq!(Ordering::Less, a1.cmp(&a2));
     }
