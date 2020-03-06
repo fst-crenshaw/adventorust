@@ -129,24 +129,32 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
     // add it to known program state.
-    let maybe_evaluated_expr: Option<u32> = eval_expr(&assign.exp);
+    let maybe_evaluated_expr: Option<u32> = eval_expr(&assign.exp, &state.known);
 
-    match maybe_evaluated_expr {
-        Some(e) => {
-            state.known.insert(assign.id.to_owned(), e);
-        }
-        None => {
-            let my_exp = assign.exp.clone();
-            state.free.insert(assign.id.to_owned(), my_exp);
-        }
+    // The expression has only Literals and may be immediately
+    // evaluated.
+    if let Some(e) = maybe_evaluated_expr {
+        state.known.insert(assign.id.to_owned(), e);
+        return;
     }
+
+    let my_exp = assign.exp.clone();
+    state.free.insert(assign.id.to_owned(), my_exp);
 }
 
-fn eval_expr(exp: &Exp) -> Option<u32> {
+fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
     match exp {
         Exp::Literal(val) => Some(*val),
         Exp::UnaryExp(f, Term::Literal(val)) => Some(f(*val)),
         Exp::BinaryExp(f, Term::Literal(val1), Term::Literal(val2)) => Some(f(*val1, *val2)),
+        Exp::UnaryExp(f, Term::Variable(v)) => {
+            let known_val = known.get(v);
+            if let Some(kv) = known_val {
+                return Some(f(*kv));
+            } else {
+                return None;
+            }
+        }
         _ => None,
     }
 }
@@ -168,7 +176,7 @@ fn main() {
 
     for a in assignments.iter() {
         println!("{:?}", a);
-        println!("->{:?}", eval_expr(&a.exp));
+        //        println!("->{:?}", eval_expr(&a.exp));
     }
 }
 
@@ -207,23 +215,6 @@ mod tests {
     }
 
     #[test]
-    fn eval_memory() {
-        println!("{:?}", std::mem::size_of::<&u32>());
-        println!("{:?}", std::mem::size_of::<u32>());
-        println!("{:?}", std::mem::size_of::<&u64>());
-        println!("{:?}", std::mem::size_of::<u64>());
-
-        println!("{:?}", std::mem::size_of::<String>());
-        println!("{:?}", std::mem::size_of_val(&String::from("Tanya")));
-        println!("{:?}", std::mem::size_of_val("Tanya"));
-        println!("{:?}", std::mem::size_of_val(&"Tanya"));
-        println!("{:?}", std::mem::size_of::<&str>());
-
-        println!("{:?}", std::mem::size_of::<State>());
-        println!("{:?}", std::mem::size_of::<Exp>());
-    }
-
-    #[test]
     fn eval_assignments() {
         let my_val = Some(1);
         let mut state = State::new();
@@ -232,14 +223,15 @@ mod tests {
         my_assign = parse("1 -> x").unwrap();
         eval(&my_assign, &mut state);
 
-        my_assign = parse("1 AND 1 -> y").unwrap();
+        my_assign = parse("1 AND 1 -> z").unwrap();
         eval(&my_assign, &mut state);
 
-        my_assign = parse("1 AND z -> r").unwrap();
+        my_assign = parse("NOT z -> r").unwrap();
         eval(&my_assign, &mut state);
 
         assert_eq!(state.known.get("x"), my_val.as_ref());
-        assert_eq!(state.known.get("y"), my_val.as_ref());
+        assert_eq!(state.known.get("z"), my_val.as_ref());
+        assert_eq!(state.known.get("r"), my_val.as_ref());
         println!("{:?}", state);
         println!("{:?}", std::mem::size_of_val(&state));
     }
@@ -247,21 +239,22 @@ mod tests {
     #[test]
     fn eval_expressions() {
         let mut my_assign;
+        let known = HashMap::new();
 
         my_assign = parse("1 AND 0 -> d").unwrap();
-        assert_eq!(eval_expr(&my_assign.exp), Some(0));
+        assert_eq!(eval_expr(&my_assign.exp, &known), Some(0));
 
         my_assign = parse("1 AND 1 -> d").unwrap();
-        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+        assert_eq!(eval_expr(&my_assign.exp, &known), Some(1));
 
         my_assign = parse("0 OR 1 -> d").unwrap();
-        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+        assert_eq!(eval_expr(&my_assign.exp, &known), Some(1));
 
         my_assign = parse("1 OR 1 -> d").unwrap();
-        assert_eq!(eval_expr(&my_assign.exp), Some(1));
+        assert_eq!(eval_expr(&my_assign.exp, &known), Some(1));
 
         my_assign = parse("0 OR 0 -> d").unwrap();
-        assert_eq!(eval_expr(&my_assign.exp), Some(0));
+        assert_eq!(eval_expr(&my_assign.exp, &known), Some(0));
     }
 
     #[test]
@@ -351,15 +344,21 @@ mod tests {
             })
         );
     }
-}
 
-/*
-123 -> x
-456 -> y
-x AND y -> d
-x OR y -> e
-x LSHIFT 2 -> f
-y RSHIFT 2 -> g
-NOT x -> h
-NOT y -> i
-*/
+    #[test]
+    fn eval_memory() {
+        println!("{:?}", std::mem::size_of::<&u32>());
+        println!("{:?}", std::mem::size_of::<u32>());
+        println!("{:?}", std::mem::size_of::<&u64>());
+        println!("{:?}", std::mem::size_of::<u64>());
+
+        println!("{:?}", std::mem::size_of::<String>());
+        println!("{:?}", std::mem::size_of_val(&String::from("Tanya")));
+        println!("{:?}", std::mem::size_of_val("Tanya"));
+        println!("{:?}", std::mem::size_of_val(&"Tanya"));
+        println!("{:?}", std::mem::size_of::<&str>());
+
+        println!("{:?}", std::mem::size_of::<State>());
+        println!("{:?}", std::mem::size_of::<Exp>());
+    }
+}
