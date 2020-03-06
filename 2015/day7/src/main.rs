@@ -152,19 +152,46 @@ fn eval_expr(exp: &Exp) -> Option<u32> {
 }
 
 fn main() {
+    let mut assignments = Vec::new();
+
     let s = fs::read_to_string("input_sample.txt").unwrap();
     let s = s.trim();
 
+    // Gather and parse all the assignments in the input.
     for line in s.split('\n') {
         let assignment = parse(line).unwrap();
-        println!("{:?}", assignment);
-        println!("->{:?}", eval_expr(&assignment.exp));
+        assignments.push(assignment);
+    }
+
+    for a in assignments.iter() {
+        println!("{:?}", a);
+        println!("->{:?}", eval_expr(&a.exp));
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, State, Term};
+    use crate::{
+        aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, State, Term,
+    };
+    use std::mem;
+
+    #[test]
+    fn eval_memory() {
+        println!("{:?}", std::mem::size_of::<&u32>());
+        println!("{:?}", std::mem::size_of::<u32>());
+        println!("{:?}", std::mem::size_of::<&u64>());
+        println!("{:?}", std::mem::size_of::<u64>());
+
+        println!("{:?}", std::mem::size_of::<String>());
+        println!("{:?}", std::mem::size_of_val(&String::from("Tanya")));
+        println!("{:?}", std::mem::size_of_val("Tanya"));
+        println!("{:?}", std::mem::size_of_val(&"Tanya"));
+        println!("{:?}", std::mem::size_of::<&str>());
+
+        println!("{:?}", std::mem::size_of::<State>());
+        println!("{:?}", std::mem::size_of::<Exp>());
+    }
 
     #[test]
     fn eval_assignments() {
@@ -183,8 +210,8 @@ mod tests {
 
         assert_eq!(state.known.get("x"), my_val.as_ref());
         assert_eq!(state.known.get("y"), my_val.as_ref());
-
         println!("{:?}", state);
+        println!("{:?}", std::mem::size_of_val(&state));
     }
 
     #[test]
