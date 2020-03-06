@@ -48,8 +48,8 @@ enum Exp {
 ///
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct Assignment {
-    id: String,
     exp: Exp,
+    id: String,
 }
 
 fn aoc_and(a: u32, b: u32) -> u32 {
@@ -177,7 +177,34 @@ mod tests {
     use crate::{
         aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, State, Term,
     };
+    use std::cmp::Ordering;
     use std::mem;
+
+    #[test]
+    fn compare_expressions() {
+        let mut a1;
+        let mut a2;
+
+        a1 = parse("1 -> b").unwrap();
+        a2 = parse("1 -> b").unwrap();
+        assert_eq!(Ordering::Equal, a1.cmp(&a2));
+
+        a2 = parse("1 -> c").unwrap();
+        assert_eq!(Ordering::Less, a1.cmp(&a2));
+
+        a2 = parse("NOT 1 -> d").unwrap();
+        assert_eq!(Ordering::Less, a1.cmp(&a2));
+
+        a2 = parse("NOT x -> a").unwrap();
+        assert_eq!(Ordering::Less, a1.cmp(&a2));
+
+        a2 = parse("y AND x -> a").unwrap();
+        assert_eq!(Ordering::Less, a1.cmp(&a2));
+
+        a1 = parse("1 AND x -> a").unwrap();
+        a2 = parse("y AND x -> a").unwrap();
+        assert_eq!(Ordering::Less, a1.cmp(&a2));
+    }
 
     #[test]
     fn eval_memory() {
