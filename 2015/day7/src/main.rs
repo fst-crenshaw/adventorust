@@ -22,7 +22,7 @@ impl State {
 
 /// A term in an expression is one of a variable (like "x") or an
 /// unsigned integer (like 1).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum Term {
     Literal(u32),
     Variable(String),
@@ -36,7 +36,7 @@ enum Term {
 ///  x OR 0
 ///  NOT y
 ///  NOT 1
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum Exp {
     Literal(u32),
     UnaryExp(fn(a: u32) -> u32, Term),
@@ -46,7 +46,7 @@ enum Exp {
 /// An Assignment is an identifier and an expression.
 ///    i.e., <exp> -> <id>
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct Assignment {
     id: String,
     exp: Exp,
@@ -162,6 +162,9 @@ fn main() {
         let assignment = parse(line).unwrap();
         assignments.push(assignment);
     }
+
+    // Sort the assignments
+    assignments.sort();
 
     for a in assignments.iter() {
         println!("{:?}", a);
