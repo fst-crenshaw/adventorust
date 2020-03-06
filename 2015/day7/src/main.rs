@@ -170,7 +170,7 @@ mod tests {
     fn eval_assignments() {
         let my_val = Some(1);
         let mut state = State::new();
-        let mut my_assign;
+        let my_assign;
 
         my_assign = parse("1 -> x").unwrap();
         eval(&my_assign, &mut state);
