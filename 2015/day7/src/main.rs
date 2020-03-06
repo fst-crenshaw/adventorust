@@ -170,12 +170,16 @@ mod tests {
     fn eval_assignments() {
         let my_val = Some(1);
         let mut state = State::new();
-        let my_assign;
+        let mut my_assign;
 
         my_assign = parse("1 -> x").unwrap();
         eval(&my_assign, &mut state);
 
+        my_assign = parse("1 AND 1 -> y").unwrap();
+        eval(&my_assign, &mut state);
+
         assert_eq!(state.known.get("x"), my_val.as_ref());
+        assert_eq!(state.known.get("y"), my_val.as_ref());
     }
 
     #[test]
