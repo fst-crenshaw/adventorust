@@ -178,8 +178,13 @@ mod tests {
         my_assign = parse("1 AND 1 -> y").unwrap();
         eval(&my_assign, &mut state);
 
+        my_assign = parse("1 AND z -> r").unwrap();
+        eval(&my_assign, &mut state);
+
         assert_eq!(state.known.get("x"), my_val.as_ref());
         assert_eq!(state.known.get("y"), my_val.as_ref());
+
+        println!("{:?}", state);
     }
 
     #[test]
