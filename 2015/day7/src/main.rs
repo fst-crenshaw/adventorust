@@ -61,7 +61,11 @@ fn aoc_or(a: u32, b: u32) -> u32 {
 }
 
 fn aoc_not(a: u32) -> u32 {
-    return !a;
+    println!("Evaluation Not {}", a);
+    if (a == 0) {
+        return 1;
+    }
+    return 0;
 }
 
 /// Given a string representing a term in an expression return its
@@ -134,6 +138,7 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
     // The expression has only Literals and may be immediately
     // evaluated.
     if let Some(e) = maybe_evaluated_expr {
+        println!("Adding to known values: {} = {}.", assign.id, e);
         state.known.insert(assign.id.to_owned(), e);
         return;
     }
@@ -144,12 +149,14 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
 
 fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
     match exp {
-        Exp::Literal(val) => Some(*val),
-        Exp::UnaryExp(f, Term::Literal(val)) => Some(f(*val)),
-        Exp::BinaryExp(f, Term::Literal(val1), Term::Literal(val2)) => Some(f(*val1, *val2)),
+        Exp::Literal(el) => Some(*el),
+        Exp::UnaryExp(f, Term::Literal(el)) => Some(f(*el)),
+        Exp::BinaryExp(f, Term::Literal(el1), Term::Literal(el2)) => Some(f(*el1, *el2)),
         Exp::UnaryExp(f, Term::Variable(v)) => {
             let known_val = known.get(v);
+            println!("{} -> {:?}", v, known_val);
             if let Some(kv) = known_val {
+                println!("What is kv?: {}", kv);
                 return Some(f(*kv));
             } else {
                 return None;
@@ -216,7 +223,6 @@ mod tests {
 
     #[test]
     fn eval_assignments() {
-        let my_val = Some(1);
         let mut state = State::new();
         let mut my_assign;
 
@@ -229,9 +235,9 @@ mod tests {
         my_assign = parse("NOT z -> r").unwrap();
         eval(&my_assign, &mut state);
 
-        assert_eq!(state.known.get("x"), my_val.as_ref());
-        assert_eq!(state.known.get("z"), my_val.as_ref());
-        assert_eq!(state.known.get("r"), my_val.as_ref());
+        assert_eq!(state.known.get("x"), Some(1).as_ref());
+        assert_eq!(state.known.get("z"), Some(1).as_ref());
+        assert_eq!(state.known.get("r"), Some(0).as_ref());
         println!("{:?}", state);
         println!("{:?}", std::mem::size_of_val(&state));
     }
