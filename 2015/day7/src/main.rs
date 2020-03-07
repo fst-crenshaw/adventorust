@@ -70,11 +70,19 @@ fn aoc_not(a: u32) -> u32 {
 }
 
 fn aoc_lshift(a: u32, b: u32) -> u32 {
-    return a << b;
+    let shift = a.checked_shl(b);
+    match shift {
+        Some(v) => v,
+        None => 0,
+    }
 }
 
 fn aoc_rshift(a: u32, b: u32) -> u32 {
-    return a >> b;
+    let shift = a.checked_shr(b);
+    match shift {
+        Some(v) => v,
+        None => 0,
+    }
 }
 
 /// Given a string representing a term in an expression return its
@@ -152,7 +160,7 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment>, ()> {
     return Ok(Box::new(assign));
 }
 
-fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
+fn eval<'a>(assign: &'a Assignment, state: &'a mut State) -> bool {
     // Attempt to evaluate the expression.  If expression evaluation
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
@@ -164,11 +172,12 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) {
     if let Some(e) = maybe_evaluated_expr {
         println!("Adding to known values: {} = {}.", assign.id, e);
         state.known.insert(assign.id.to_owned(), e);
-        return;
+        return true;
     }
 
     let my_exp = assign.exp.clone();
     state.free.insert(assign.id.to_owned(), my_exp);
+    return false;
 }
 
 fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
@@ -237,10 +246,14 @@ fn main() {
     // Sort the assignments
     assignments.sort();
 
-    for a in assignments.iter() {
-        println!("{:?}", a);
-        eval(a, &mut state);
+    for _ in 0..10 {
+        for a in assignments.iter() {
+            eval(a, &mut state);
+        }
     }
+
+    println!("The value of a: {:?}", state.known.get("a"));
+    println!("The value of lx: {:?}", state.known.get("lx"));
 }
 
 #[cfg(test)]
