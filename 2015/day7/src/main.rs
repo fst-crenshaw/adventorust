@@ -7,7 +7,7 @@ use std::fs;
 /// evaluated.
 #[derive(Debug)]
 struct State {
-    known: HashMap<String, u32>,
+    known: HashMap<String, u16>,
     free: HashMap<String, Exp>,
 }
 
@@ -24,7 +24,7 @@ impl State {
 /// unsigned integer (like 1).
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum Term {
-    Literal(u32),
+    Literal(u16),
     Variable(String),
 }
 
@@ -38,10 +38,10 @@ enum Term {
 ///  NOT 1
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum Exp {
-    Literal(u32),
+    Literal(u16),
     Variable(String),
-    UnaryExp(fn(a: u32) -> u32, Term),
-    BinaryExp(fn(a: u32, b: u32) -> u32, Term, Term),
+    UnaryExp(fn(a: u16) -> u16, Term),
+    BinaryExp(fn(a: u16, b: u16) -> u16, Term, Term),
 }
 
 /// An Assignment is an identifier and an expression.
@@ -53,32 +53,30 @@ struct Assignment {
     id: String,
 }
 
-fn aoc_and(a: u32, b: u32) -> u32 {
+fn aoc_and(a: u16, b: u16) -> u16 {
     return a & b;
 }
 
-fn aoc_or(a: u32, b: u32) -> u32 {
+fn aoc_or(a: u16, b: u16) -> u16 {
     return a | b;
 }
 
-fn aoc_not(a: u32) -> u32 {
-    println!("Evaluation Not {}", a);
-    if a == 0 {
-        return 1;
-    }
-    return 0;
+fn aoc_not(a: u16) -> u16 {
+    return !a;
 }
 
-fn aoc_lshift(a: u32, b: u32) -> u32 {
-    let shift = a.checked_shl(b);
+fn aoc_lshift(a: u16, b: u16) -> u16 {
+    let shift = b.checked_shl(a.into());
+    println!("{} << {} = {:?}", b, a, shift);
     match shift {
         Some(v) => v,
         None => 0,
     }
 }
 
-fn aoc_rshift(a: u32, b: u32) -> u32 {
-    let shift = a.checked_shr(b);
+fn aoc_rshift(a: u16, b: u16) -> u16 {
+    let shift = b.checked_shr(a.into());
+    println!("{} << {} = {:?}", b, a, shift);
     match shift {
         Some(v) => v,
         None => 0,
@@ -91,7 +89,7 @@ fn reduce<'a>(s: &'a str) -> Term {
     let term = s.to_string();
 
     // Is it a number?
-    let maybe_number = term.parse::<u32>();
+    let maybe_number = term.parse::<u16>();
 
     match maybe_number {
         Ok(number) => return Term::Literal(number),
@@ -103,7 +101,7 @@ fn reduce_lhs<'a>(s: &'a str) -> Exp {
     let term = s.to_string();
 
     // Is it a number?
-    let maybe_number = term.parse::<u32>();
+    let maybe_number = term.parse::<u16>();
 
     match maybe_number {
         Ok(number) => return Exp::Literal(number),
@@ -146,7 +144,7 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment>, ()> {
         let re = Regex::new(r"^NOT (?P<exp>\w{1,2}) -> (?P<id>\w{1,2})$").unwrap();
         cap = re.captures(&s).unwrap();
         exp = Exp::UnaryExp(aoc_not, reduce(cap.name("exp").unwrap().as_str()));
-    // Parse the assignment `u32 -> <id>` or `<id> -> <id>`
+    // Parse the assignment `u16 -> <id>` or `<id> -> <id>`
     } else {
         println!("Parsing {}", s);
         let re = Regex::new(r"^(?P<lhs>\w{1,5}) -> (?P<id>\w{1,2})$").unwrap();
@@ -165,7 +163,7 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) -> bool {
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
     // add it to known program state.
-    let maybe_evaluated_expr: Option<u32> = eval_expr(&assign.exp, &state.known);
+    let maybe_evaluated_expr: Option<u16> = eval_expr(&assign.exp, &state.known);
 
     // The expression has only Literals and may be immediately
     // evaluated.
@@ -180,7 +178,7 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) -> bool {
     return false;
 }
 
-fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
+fn eval_expr(exp: &Exp, known: &HashMap<String, u16>) -> Option<u16> {
     match exp {
         Exp::Literal(el) => Some(*el),
         Exp::UnaryExp(f, Term::Literal(el)) => Some(f(*el)),
@@ -246,8 +244,9 @@ fn main() {
     // Sort the assignments
     assignments.sort();
 
-    for _ in 0..10 {
+    for _ in 0..5 {
         for a in assignments.iter() {
+            println!("Evaluating: {:?}", a);
             eval(a, &mut state);
         }
     }
