@@ -39,6 +39,7 @@ enum Term {
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum Exp {
     Literal(u32),
+    Variable(String),
     UnaryExp(fn(a: u32) -> u32, Term),
     BinaryExp(fn(a: u32, b: u32) -> u32, Term, Term),
 }
@@ -68,6 +69,14 @@ fn aoc_not(a: u32) -> u32 {
     return 0;
 }
 
+fn aoc_lshift(a: u32, b: u32) -> u32 {
+    return a << b;
+}
+
+fn aoc_rshift(a: u32, b: u32) -> u32 {
+    return a >> b;
+}
+
 /// Given a string representing a term in an expression return its
 /// type, either a Variable (like "x") or a Literal (like 1).
 fn reduce<'a>(s: &'a str) -> Term {
@@ -82,30 +91,44 @@ fn reduce<'a>(s: &'a str) -> Term {
     }
 }
 
+fn reduce_lhs<'a>(s: &'a str) -> Exp {
+    let term = s.to_string();
+
+    // Is it a number?
+    let maybe_number = term.parse::<u32>();
+
+    match maybe_number {
+        Ok(number) => return Exp::Literal(number),
+        Err(_) => return Exp::Variable(term.clone()),
+    }
+}
+
 /// Given a string representing an assignment return its parsed
 /// Assignment structure.
 fn parse<'a>(s: &'a str) -> Result<Box<Assignment>, ()> {
     let exp;
     let cap;
 
-    // Parse the assignment `<id> AND <id> -> <id>`
-    if s.contains("AND") {
-        let re =
-            Regex::new(r"^(?P<exp1>\w{1,2}) AND (?P<exp2>\w{1,2}) -> (?P<id>\w{1,2})$").unwrap();
+    println!("Parsing {}", s);
+
+    // Parse any assignment containing a binary expression.
+    if s.contains("RSHIFT") || s.contains("LSHIFT") || s.contains("AND") || s.contains("OR") {
+        let re = Regex::new(
+            r"^(?P<exp1>\w{1,2}) (?P<op>RSHIFT|LSHIFT|AND|OR) (?P<exp2>\w{1,2}) -> (?P<id>\w{1,2})$",
+        )
+        .unwrap();
         cap = re.captures(&s).unwrap();
+
+        let f = match cap.name("op").unwrap().as_str() {
+            "RSHIFT" => aoc_rshift,
+            "LSHIFT" => aoc_lshift,
+            "OR" => aoc_or,
+            "AND" => aoc_and,
+            _ => panic!("You can't always get what you want."),
+        };
+
         exp = Exp::BinaryExp(
-            aoc_and,
-            reduce(cap.name("exp1").unwrap().as_str()),
-            reduce(cap.name("exp2").unwrap().as_str()),
-        );
-    }
-    // Parse the assignment `<id> OR <id> -> <id>`
-    else if s.contains("OR") {
-        let re =
-            Regex::new(r"^(?P<exp1>\w{1,2}) OR (?P<exp2>\w{1,2}) -> (?P<id>\w{1,2})$").unwrap();
-        cap = re.captures(&s).unwrap();
-        exp = Exp::BinaryExp(
-            aoc_or,
+            f,
             reduce(cap.name("exp1").unwrap().as_str()),
             reduce(cap.name("exp2").unwrap().as_str()),
         );
@@ -115,11 +138,12 @@ fn parse<'a>(s: &'a str) -> Result<Box<Assignment>, ()> {
         let re = Regex::new(r"^NOT (?P<exp>\w{1,2}) -> (?P<id>\w{1,2})$").unwrap();
         cap = re.captures(&s).unwrap();
         exp = Exp::UnaryExp(aoc_not, reduce(cap.name("exp").unwrap().as_str()));
-    // Parse the assignment `u32 -> <id>`
+    // Parse the assignment `u32 -> <id>` or `<id> -> <id>`
     } else {
-        let re = Regex::new(r"^(?P<literal>\d{1,4}) -> (?P<id>\w{1,2})$").unwrap();
+        println!("Parsing {}", s);
+        let re = Regex::new(r"^(?P<lhs>\w{1,5}) -> (?P<id>\w{1,2})$").unwrap();
         cap = re.captures(&s).unwrap();
-        exp = Exp::Literal(cap.name("literal").unwrap().as_str().parse().unwrap());
+        exp = reduce_lhs(cap.name("lhs").unwrap().as_str());
     }
     let assign = Assignment {
         id: cap.name("id").unwrap().as_str().to_string(),
@@ -152,6 +176,14 @@ fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
         Exp::Literal(el) => Some(*el),
         Exp::UnaryExp(f, Term::Literal(el)) => Some(f(*el)),
         Exp::BinaryExp(f, Term::Literal(el1), Term::Literal(el2)) => Some(f(*el1, *el2)),
+        Exp::Variable(v) => {
+            let known_val = known.get(v);
+            if let Some(kv) = known_val {
+                return Some(*kv);
+            } else {
+                return None;
+            }
+        }
         Exp::UnaryExp(f, Term::Variable(v)) => {
             let known_val = known.get(v);
             if let Some(kv) = known_val {
@@ -191,8 +223,9 @@ fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
 
 fn main() {
     let mut assignments = Vec::new();
+    let mut state = State::new();
 
-    let s = fs::read_to_string("input_sample.txt").unwrap();
+    let s = fs::read_to_string("input.txt").unwrap();
     let s = s.trim();
 
     // Gather and parse all the assignments in the input.
@@ -206,7 +239,7 @@ fn main() {
 
     for a in assignments.iter() {
         println!("{:?}", a);
-        //        println!("->{:?}", eval_expr(&a.exp));
+        eval(a, &mut state);
     }
 }
 
@@ -216,7 +249,6 @@ mod tests {
         aoc_and, aoc_not, aoc_or, eval, eval_expr, parse, Assignment, Exp, HashMap, State, Term,
     };
     use std::cmp::Ordering;
-    use std::mem;
 
     #[test]
     fn compare_expressions() {
@@ -261,10 +293,14 @@ mod tests {
         my_assign = parse("1 AND r -> s").unwrap();
         eval(&my_assign, &mut state);
 
+        my_assign = parse("z OR r -> t").unwrap();
+        eval(&my_assign, &mut state);
+
         assert_eq!(state.known.get("x"), Some(1).as_ref());
         assert_eq!(state.known.get("z"), Some(1).as_ref());
         assert_eq!(state.known.get("r"), Some(0).as_ref());
         assert_eq!(state.known.get("s"), Some(0).as_ref());
+        assert_eq!(state.known.get("t"), Some(1).as_ref());
     }
 
     #[test]
@@ -374,22 +410,5 @@ mod tests {
                 exp: Exp::UnaryExp(aoc_not, Term::Literal(1))
             })
         );
-    }
-
-    #[test]
-    fn eval_memory() {
-        println!("{:?}", std::mem::size_of::<&u32>());
-        println!("{:?}", std::mem::size_of::<u32>());
-        println!("{:?}", std::mem::size_of::<&u64>());
-        println!("{:?}", std::mem::size_of::<u64>());
-
-        println!("{:?}", std::mem::size_of::<String>());
-        println!("{:?}", std::mem::size_of_val(&String::from("Tanya")));
-        println!("{:?}", std::mem::size_of_val("Tanya"));
-        println!("{:?}", std::mem::size_of_val(&"Tanya"));
-        println!("{:?}", std::mem::size_of::<&str>());
-
-        println!("{:?}", std::mem::size_of::<State>());
-        println!("{:?}", std::mem::size_of::<Exp>());
     }
 }

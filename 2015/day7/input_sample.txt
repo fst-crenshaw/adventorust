@@ -4,3 +4,5 @@
 NOT x -> h
 NOT y -> i
 i AND p -> z
+i RSHIFT 3 -> m
+m LSHIFT 1 -> a
