@@ -62,7 +62,7 @@ fn aoc_or(a: u32, b: u32) -> u32 {
 
 fn aoc_not(a: u32) -> u32 {
     println!("Evaluation Not {}", a);
-    if (a == 0) {
+    if a == 0 {
         return 1;
     }
     return 0;
@@ -154,15 +154,38 @@ fn eval_expr(exp: &Exp, known: &HashMap<String, u32>) -> Option<u32> {
         Exp::BinaryExp(f, Term::Literal(el1), Term::Literal(el2)) => Some(f(*el1, *el2)),
         Exp::UnaryExp(f, Term::Variable(v)) => {
             let known_val = known.get(v);
-            println!("{} -> {:?}", v, known_val);
             if let Some(kv) = known_val {
-                println!("What is kv?: {}", kv);
                 return Some(f(*kv));
             } else {
                 return None;
             }
         }
-        _ => None,
+        Exp::BinaryExp(f, Term::Literal(el), Term::Variable(v)) => {
+            let known_val = known.get(v);
+            if let Some(kv) = known_val {
+                return Some(f(*el, *kv));
+            } else {
+                return None;
+            }
+        }
+        Exp::BinaryExp(f, Term::Variable(v), Term::Literal(el)) => {
+            let known_val = known.get(v);
+            if let Some(kv) = known_val {
+                return Some(f(*el, *kv));
+            } else {
+                return None;
+            }
+        }
+        Exp::BinaryExp(f, Term::Variable(v1), Term::Variable(v2)) => {
+            let known_val1 = known.get(v1);
+            let known_val2 = known.get(v2);
+            let pair = (known_val1, known_val2);
+
+            match pair {
+                (Some(kv1), Some(kv2)) => Some(f(*kv1, *kv2)),
+                _ => None,
+            }
+        }
     }
 }
 
@@ -235,11 +258,13 @@ mod tests {
         my_assign = parse("NOT z -> r").unwrap();
         eval(&my_assign, &mut state);
 
+        my_assign = parse("1 AND r -> s").unwrap();
+        eval(&my_assign, &mut state);
+
         assert_eq!(state.known.get("x"), Some(1).as_ref());
         assert_eq!(state.known.get("z"), Some(1).as_ref());
         assert_eq!(state.known.get("r"), Some(0).as_ref());
-        println!("{:?}", state);
-        println!("{:?}", std::mem::size_of_val(&state));
+        assert_eq!(state.known.get("s"), Some(0).as_ref());
     }
 
     #[test]
