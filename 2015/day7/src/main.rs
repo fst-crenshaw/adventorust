@@ -299,6 +299,7 @@ mod tests {
         my_assign = parse("1 AND 1 -> z").unwrap();
         eval(&my_assign, &mut state);
 
+        // Bitwise NOT of an unsigned 16 1 is 15 0's
         my_assign = parse("NOT z -> r").unwrap();
         eval(&my_assign, &mut state);
 
@@ -310,9 +311,9 @@ mod tests {
 
         assert_eq!(state.known.get("x"), Some(1).as_ref());
         assert_eq!(state.known.get("z"), Some(1).as_ref());
-        assert_eq!(state.known.get("r"), Some(0).as_ref());
+        assert_eq!(state.known.get("r"), Some(65534).as_ref());
         assert_eq!(state.known.get("s"), Some(0).as_ref());
-        assert_eq!(state.known.get("t"), Some(1).as_ref());
+        assert_eq!(state.known.get("t"), Some(65535).as_ref());
     }
 
     #[test]
