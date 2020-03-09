@@ -15,10 +15,8 @@ fn eval<'a>(assign: &'a mut Assignment, state: &'a mut State) -> bool {
         return false; // assign.val;
     }
 
-    // Attempt to evaluate the expression.  If expression evaluation
-    // returns None, then we add the expression to the set of free
-    // variables.  If expression evaluation returns Some(_) then we
-    // add it to known program state.
+    // Attempt to evaluate the expression. If expression evaluation
+    // returns Some(_) then we add it to known program state.
     let maybe_evaluated_expr: Option<u16> = eval_expr(&assign.exp, &state.known);
 
     // The expression has only Literals and may be immediately
@@ -129,29 +127,28 @@ mod tests {
         let mut my_assign;
 
         my_assign = parse("1 -> x").unwrap();
-        eval(&my_assign, &mut state);
+        eval(&mut my_assign, &mut state);
+        assert_eq!(state.known.get("x"), Some(1).as_ref());
 
         my_assign = parse("1 AND 1 -> z").unwrap();
-        eval(&my_assign, &mut state);
+        eval(&mut my_assign, &mut state);
+        assert_eq!(state.known.get("z"), Some(1).as_ref());
 
         // Bitwise NOT of an unsigned 16 1 is 15 0's
         my_assign = parse("NOT z -> r").unwrap();
-        eval(&my_assign, &mut state);
+        eval(&mut my_assign, &mut state);
+        assert_eq!(state.known.get("r"), Some(65534).as_ref());
 
         my_assign = parse("1 AND r -> s").unwrap();
-        eval(&my_assign, &mut state);
+        eval(&mut my_assign, &mut state);
+        assert_eq!(state.known.get("s"), Some(0).as_ref());
 
         my_assign = parse("8 AND r -> j").unwrap();
-        eval(&my_assign, &mut state);
+        eval(&mut my_assign, &mut state);
+        assert_eq!(state.known.get("j"), Some(8).as_ref());
 
         my_assign = parse("z OR r -> t").unwrap();
-        eval(&my_assign, &mut state);
-
-        assert_eq!(state.known.get("x"), Some(1).as_ref());
-        assert_eq!(state.known.get("z"), Some(1).as_ref());
-        assert_eq!(state.known.get("r"), Some(65534).as_ref());
-        assert_eq!(state.known.get("s"), Some(0).as_ref());
-        assert_eq!(state.known.get("j"), Some(8).as_ref());
+        eval(&mut my_assign, &mut state);
         assert_eq!(state.known.get("t"), Some(65535).as_ref());
     }
 
