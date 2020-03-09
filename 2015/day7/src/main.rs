@@ -9,10 +9,10 @@ use std::fs;
 
 // Return true if a new valuation was created.
 fn eval<'a>(assign: &'a mut Assignment, state: &'a mut State) -> bool {
-    // An expression have have been previously evaluated.  If so, its
-    // valuation is available in the Assignment's val field.
+    // An assignment have have been previously evaluated.  If so, its
+    // valuation is available in the assignment's val field.
     if let Some(_) = assign.val {
-        return false; // assign.val;
+        return false;
     }
 
     // Attempt to evaluate the expression. If expression evaluation
@@ -27,6 +27,7 @@ fn eval<'a>(assign: &'a mut Assignment, state: &'a mut State) -> bool {
         return true;
     }
 
+    // This assignment cannot be evaluated.
     return false;
 }
 
@@ -93,12 +94,11 @@ fn main() {
         assignments.push(assignment);
     }
 
-    // Sort the assignments
-    // assignments.sort();
-
     let mut last_evaluations;
     let mut this_evaluations;
 
+    // Evaluate assignments until no new assignments may
+    // be evaluated.
     loop {
         this_evaluations = 0;
         for a in assignments.iter_mut() {
