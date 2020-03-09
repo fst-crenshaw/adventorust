@@ -1,57 +1,8 @@
+use self::types::{Assignment, Exp, Term};
+
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-
-/// The program state is the set of variables whose values are known
-/// and the set of variables whose assigned expressions cannot yet be
-/// evaluated.
-#[derive(Debug)]
-struct State {
-    known: HashMap<String, u16>,
-    free: HashMap<String, Exp>,
-}
-
-impl State {
-    fn new() -> Self {
-        Self {
-            known: HashMap::new(),
-            free: HashMap::new(),
-        }
-    }
-}
-
-/// A term in an expression is one of a variable (like "x") or an
-/// unsigned integer (like 1).
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-enum Term {
-    Literal(u16),
-    Variable(String),
-}
-
-/// An expression is any of:
-///  123
-///  1 AND y
-///  x AND y
-///  0 OR x
-///  x OR 0
-///  NOT y
-///  NOT 1
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-enum Exp {
-    Literal(u16),
-    Variable(String),
-    UnaryExp(fn(a: u16) -> u16, Term),
-    BinaryExp(fn(a: u16, b: u16) -> u16, Term, Term),
-}
-
-/// An Assignment is an identifier and an expression.
-///    i.e., <exp> -> <id>
-///
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
-struct Assignment {
-    exp: Exp,
-    id: String,
-}
 
 fn aoc_and(a: u16, b: u16) -> u16 {
     return a & b;
