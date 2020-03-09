@@ -7,7 +7,14 @@ use self::types::{Assignment, Exp, State, Term};
 use std::collections::HashMap;
 use std::fs;
 
-fn eval<'a>(assign: &'a Assignment, state: &'a mut State) -> bool {
+// Return true if a new valuation was created.
+fn eval<'a>(assign: &'a mut Assignment, state: &'a mut State) -> bool {
+    // An expression have have been previously evaluated.  If so, its
+    // valuation is available in the Assignment's val field.
+    if let Some(_) = assign.val {
+        return false; // assign.val;
+    }
+
     // Attempt to evaluate the expression.  If expression evaluation
     // returns None, then we add the expression to the set of free
     // variables.  If expression evaluation returns Some(_) then we
@@ -17,13 +24,11 @@ fn eval<'a>(assign: &'a Assignment, state: &'a mut State) -> bool {
     // The expression has only Literals and may be immediately
     // evaluated.
     if let Some(e) = maybe_evaluated_expr {
-        println!("Adding to known values: {} = {}.", assign.id, e);
         state.known.insert(assign.id.to_owned(), e);
+        assign.val = Some(e);
         return true;
     }
 
-    let my_exp = assign.exp.clone();
-    state.free.insert(assign.id.to_owned(), my_exp);
     return false;
 }
 
@@ -91,17 +96,25 @@ fn main() {
     }
 
     // Sort the assignments
-    assignments.sort();
+    // assignments.sort();
 
-    for _ in 0..5 {
-        for a in assignments.iter() {
-            println!("Evaluating: {:?}", a);
-            eval(a, &mut state);
+    let mut last_evaluations;
+    let mut this_evaluations;
+
+    loop {
+        this_evaluations = 0;
+        for a in assignments.iter_mut() {
+            if eval(a, &mut state) {
+                this_evaluations += 1;
+            }
+        }
+        last_evaluations = this_evaluations;
+        if this_evaluations == 0 && last_evaluations == 0 {
+            break;
         }
     }
 
     println!("The value of a: {:?}", state.known.get("a"));
-    println!("The value of lx: {:?}", state.known.get("lx"));
 }
 
 #[cfg(test)]
