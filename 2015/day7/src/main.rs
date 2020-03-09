@@ -128,6 +128,9 @@ mod tests {
         my_assign = parse("1 AND r -> s").unwrap();
         eval(&my_assign, &mut state);
 
+        my_assign = parse("8 AND r -> j").unwrap();
+        eval(&my_assign, &mut state);
+
         my_assign = parse("z OR r -> t").unwrap();
         eval(&my_assign, &mut state);
 
@@ -135,6 +138,7 @@ mod tests {
         assert_eq!(state.known.get("z"), Some(1).as_ref());
         assert_eq!(state.known.get("r"), Some(65534).as_ref());
         assert_eq!(state.known.get("s"), Some(0).as_ref());
+        assert_eq!(state.known.get("j"), Some(8).as_ref());
         assert_eq!(state.known.get("t"), Some(65535).as_ref());
     }
 
