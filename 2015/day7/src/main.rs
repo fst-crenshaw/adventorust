@@ -27,7 +27,7 @@ fn eval<'a>(assign: &'a mut Assignment, state: &'a mut State) -> bool {
         return true;
     }
 
-    // This assignment cannot be evaluated.
+    // This assignment cannot be evaluated given the known state.
     return false;
 }
 
