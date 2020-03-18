@@ -3,11 +3,10 @@ extern crate num;
 use num::{one, range_inclusive, zero, Num};
 use std::collections::HashSet;
 
-fn is_prime<
+fn is_prime<T>(n: T) -> bool
+where
     T: Copy + num::ToPrimitive + num::CheckedAdd + std::cmp::PartialOrd + std::clone::Clone + Num,
->(
-    n: T,
-) -> bool {
+{
     // Create a 0, 1, and 2 that are compatible with any numeric type.
     let any_zero: T = zero();
     let any_one: T = one();
