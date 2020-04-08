@@ -27,7 +27,12 @@ fn pop_random(v: &mut Vec<u32>) -> Option<u32> {
     if v.len() == 0 {
 	return None;
     }
+
+    // Instantiate a random number generator.
     let mut rng = rand::thread_rng();
+
+    // Generate a random number between 0 and the length of the
+    // vector.  Then remove than random item.
     let rando = rng.gen_range(0, v.len());
     Some(v.remove(rando as usize))
 }
@@ -63,14 +68,16 @@ async fn async_worker() {
     let mut result1: Vec<u32> = Vec::with_capacity(3);
     let mut result2: Vec<u32> = Vec::with_capacity(3);  
 
-    let sr1 = Arc::clone(&shared_ref);
-    let sr2 = Arc::clone(&shared_ref);
-    
-    let f1 = writer(sr1, &mut result1);
-    let f2 = writer(sr2, &mut result2);
-
-    futures::join!(f1, f2);
-    
+    for _ in 0..3 {
+	let sr1 = Arc::clone(&shared_ref);
+	let sr2 = Arc::clone(&shared_ref);
+	
+	let f1 = writer(sr1, &mut result1);
+	let f2 = writer(sr2, &mut result2);
+	
+	futures::join!(f1, f2);
+    }
+	
     println!("Resulting vector contents: {:?}", result1);
     println!("Resulting vector contents: {:?}", result2);
     println!("Initial vector is now:  {:?}", shared_ref);
