@@ -13,7 +13,7 @@ struct Circle {
 }
 
 impl Shape for Circle {
-    fn new(diameter: u32) -> Self {
+    fn new(&self, diameter: u32) -> Self {
 	Circle {
 	    diameter,
 	}
@@ -35,15 +35,14 @@ impl Shape for Square {
     }
     fn area(&self) -> f32 {
 	(self.side * self.side) as f32
-    }
-    
+    }    
 }
 
 
 #[derive(Debug, Default)]
 struct Params {
     name: String,
-    diameter: u32,
+    n: u32,
 }
 
 #[derive(Debug, Default)]
@@ -68,7 +67,7 @@ impl std::str::FromStr for KvPair {
 }
 
 fn main() {
-    let matches = App::new("structhash!")
+    let matches = App::new("shapes")
         .arg(
             Arg::with_name("params")
                 .short("s")
@@ -95,7 +94,7 @@ fn main() {
         for KvPair { key, value } in stuff {
             match key.as_str() {
 		"name" => params.name = value,
-                "diameter" => params.diameter = value.parse().unwrap(),
+                "n" => params.n = value.parse().unwrap(),
                 _ => todo!(),
             }
         }
@@ -104,14 +103,15 @@ fn main() {
 
     // Examine the "name" that was passed in and create the
     // shape equivalent to that name.
+    let my_shape: Box<dyn Shape>;
     match params.name.as_str() {
 	"circle" =>  {
-	    let my_circle = Circle::new(params.diameter);
-	    dbg!(my_circle.area());
+	    let my_shape = Circle::new(params.n);
+	    dbg!(my_shape.area());
 	}
 	"square" => {
-	    let my_square = Square::new(params.diameter);
-	    dbg!(my_square.area());
+	    let my_shape = Square::new(params.n);
+	    dbg!(my_shape.area());
 	}
 	_ => println!("Nope"),
     }
