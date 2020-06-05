@@ -46,6 +46,9 @@ fn main() {
         )
         .get_matches();
 
+    // dbg!(matches);
+
+    
     let stuff: Vec<KvPair> = matches
         .values_of("params")
         .unwrap()
@@ -53,10 +56,11 @@ fn main() {
 	.map(|s| s.parse().unwrap())
 	.collect();
 
+    // dbg!(stuff);
+    
     let params = {
         let mut params = Params::default();
-        for pair in stuff {
-            let KvPair { key, value } = pair;
+        for KvPair { key, value } in stuff {
             match key.as_str() {
 		"name" => params.name = value,
                 "diameter" => params.diameter = value.parse().unwrap(),
@@ -66,6 +70,7 @@ fn main() {
         }
 	params
     };
-
+    
+    
     dbg!(params);
 }
