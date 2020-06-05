@@ -104,15 +104,17 @@ fn main() {
 
     // Examine the "name" that was passed in and create the
     // shape equivalent to that name.
-    match params.name {
-	"circle" =  println!("Work?"),
-	_ = println!("Nope"),
+    match params.name.as_str() {
+	"circle" =>  {
+	    let my_circle = Circle::new(params.diameter);
+	    dbg!(my_circle.area());
+	}
+	"square" => {
+	    let my_square = Square::new(params.diameter);
+	    dbg!(my_square.area());
+	}
+	_ => println!("Nope"),
     }
     
-    let my_circle = Circle::new(params.diameter);
-    let my_square = Square::new(params.diameter);
-
     dbg!(params);
-    dbg!(my_circle.area());
-    dbg!(my_square.area());
 }
