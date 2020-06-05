@@ -1,17 +1,34 @@
 use clap::{App, Arg};
+use num_traits::pow;
 use std;
 
+// Generic way to describe the necessary behavior.
 trait Shape {
-    fn new(diameter: u32, height: u32) -> Self;
-    fn perimeter(&self) -> u32;
-    fn area(&self) -> u32;
+    fn new(diameter: u32) -> Self;
+    fn area(&self) -> f32;
+}
+
+
+// Circle.  Square.
+struct Circle {
+    diameter: u32,
+}
+
+impl Shape for Circle {
+    fn new(diameter: u32) -> Self {
+	Circle {
+	    diameter,
+	}
+    }
+    fn area(&self) -> f32 {
+	3.141592 * pow(self.diameter / 2,2) as f32
+    }
 }
 
 #[derive(Debug, Default)]
 struct Params {
     name: String,
     diameter: u32,
-    height: u32,
 }
 
 #[derive(Debug, Default)]
@@ -64,13 +81,15 @@ fn main() {
             match key.as_str() {
 		"name" => params.name = value,
                 "diameter" => params.diameter = value.parse().unwrap(),
-                "height" => params.height = value.parse().unwrap(),
                 _ => todo!(),
             }
         }
 	params
     };
-    
+
+    // Make a new Circle
+    let my_circle = Circle::new(params.diameter);
     
     dbg!(params);
+    dbg!(my_circle.area());
 }
