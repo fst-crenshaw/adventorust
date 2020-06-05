@@ -2,14 +2,12 @@ use clap::{App, Arg};
 use num_traits::pow;
 use std;
 
-// Generic way to describe the necessary behavior.
+// Generic way to describe the necessary behavior of a shape.
 trait Shape {
-    fn new(diameter: u32) -> Self;
+    fn new(n: u32) -> Self;
     fn area(&self) -> f32;
 }
 
-
-// Circle.  Square.
 struct Circle {
     diameter: u32,
 }
@@ -24,6 +22,23 @@ impl Shape for Circle {
 	3.141592 * pow(self.diameter / 2,2) as f32
     }
 }
+
+struct Square {
+    side: u32,
+}
+
+impl Shape for Square {
+    fn new(side: u32) -> Self {
+	Square {
+	    side, /*: diameter, */
+	}
+    }
+    fn area(&self) -> f32 {
+	(self.side * self.side) as f32
+    }
+    
+}
+
 
 #[derive(Debug, Default)]
 struct Params {
@@ -87,9 +102,17 @@ fn main() {
 	params
     };
 
-    // Make a new Circle
-    let my_circle = Circle::new(params.diameter);
+    // Examine the "name" that was passed in and create the
+    // shape equivalent to that name.
+    match params.name {
+	"circle" =  println!("Work?"),
+	_ = println!("Nope"),
+    }
     
+    let my_circle = Circle::new(params.diameter);
+    let my_square = Square::new(params.diameter);
+
     dbg!(params);
     dbg!(my_circle.area());
+    dbg!(my_square.area());
 }
