@@ -13,42 +13,63 @@ use std;
 ///   $ cargo run -- --params diameter=12 name=circle
 ///       113.097
 
-// Generic way to describe the necessary behavior of a shape.
+/// Shape: this trait defines the generic method to calculate the area
+/// of a shape.
 trait Shape {
-    fn new(n: u32) -> Self;
     fn area(&self) -> f32;
 }
 
+/// ShapeCreate: To create a shape polymorphically, use a separate
+/// creation trait.
+trait ShapeCreate {
+    fn new(param: u32) -> Self;
+}
+
+/// create: A dispatch method, parameterized by T, to create a
+/// new kind of shape, T.
+fn create<T: ShapeCreate>(param: u32) -> T {
+    T::new(param)
+}
+
+/// Trait implementation for Circle
 struct Circle {
     diameter: u32,
 }
 
 impl Shape for Circle {
-    fn new(&self, diameter: u32) -> Self {
-	Circle {
-	    diameter,
-	}
-    }
     fn area(&self) -> f32 {
 	3.141592 * pow(self.diameter / 2,2) as f32
     }
 }
 
+impl ShapeCreate for Circle {
+    fn new(diameter: u32) -> Self {
+	Circle {
+	    diameter,
+	}
+    }
+}
+
+/// Trait implementation for Square
 struct Square {
     side: u32,
 }
 
 impl Shape for Square {
-    fn new(side: u32) -> Self {
-	Square {
-	    side, /*: diameter, */
-	}
-    }
     fn area(&self) -> f32 {
 	(self.side * self.side) as f32
     }    
 }
 
+impl ShapeCreate for Square {
+    fn new(side: u32) -> Self {
+	Square {
+	    side, /*: diameter, */
+	}
+    }
+}
+
+/// Params
 #[derive(Debug, Default)]
 struct Params {
     name: String,
@@ -115,15 +136,13 @@ fn main() {
     let my_shape: Box<dyn Shape>;
     match params.name.as_str() {
 	"circle" =>  {
-	    let my_shape = Circle::new(params.n);
-	    dbg!(my_shape.area());
+	    my_shape = Box::new(create::<Circle>(params.n));
+	    println!("\nCreating a circle of diameter {} and area {}.\n", params.n, my_shape.area());
 	}
 	"square" => {
-	    let my_shape = Square::new(params.n);
-	    dbg!(my_shape.area());
+	    my_shape = Box::new(create::<Square>(params.n));
+	    println!("\nCreating a square of height {} and area {}.\n", params.n, my_shape.area());
 	}
-	_ => println!("Nope"),
+	_ => println!("\nThat shape is not implemented.\n"),
     }
-    
-    dbg!(params);
 }
