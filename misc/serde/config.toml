@@ -1,0 +1,9 @@
+[globals]
+
+number = 5
+name = "Bob"
+
+[globals.flavors]
+
+kind = "chocolate"
+filling = "nuts"
