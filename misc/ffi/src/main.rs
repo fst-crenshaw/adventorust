@@ -1,7 +1,6 @@
 extern crate libc;
 use libc::{c_int, size_t};
 
-#[link(name = "snappy")]
 extern {
     fn snappy_compress(input: *const u8,
                        input_length: size_t,
