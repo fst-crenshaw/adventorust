@@ -1,0 +1,3 @@
+[submodule "misc/ffi/misc/ffi/vendor/snappy"]
+	path = misc/ffi/misc/ffi/vendor/snappy
+	url = git@github.com:google/snappy.git
