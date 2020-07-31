@@ -1,7 +1,18 @@
 use futures::stream::StreamExt;
+use rand::Rng;
+use std::{thread, time};
 use tokio::net::TcpListener;
+use tracing::warn;
 use tracing::Level;
 use tracing_subscriber;
+
+fn do_work(id: u8) {
+    // doing "work"
+    let rand_num = time::Duration::from_millis(rand::thread_rng().gen_range(0, 10));
+    thread::sleep(rand_num);
+
+    warn!("sleep[{}]: {:?}", id, rand_num);
+}
 
 #[tokio::main]
 async fn main() {
@@ -32,18 +43,31 @@ async fn main() {
                         let (mut reader, mut writer) = sock.split();
 
                         println!("Writing to socket...");
+
+                        // read from reader
+                        let mut buf = [0 as u8; 10];
+                        let n = reader.peek(&mut buf).await.unwrap();
+                        println!("Read({}): {:?}", n, buf);
+                        let id = buf[0];
+
+                        do_work(id);
+
                         match tokio::io::copy(&mut reader, &mut writer).await {
                             Ok(amt) => {
+                                do_work(id);
+
                                 let s = tracing::warn_span!("finished writing");
                                 let _g = s.enter();
                                 let double = amt * 2;
                                 let squared = amt * amt;
                                 tracing::warn!(
+                                    id = id,
                                     nwritten = amt,
                                     double = double,
                                     squared = squared,
                                     "computed values"
                                 );
+
                                 println!("wrote {} bytes", amt);
                             }
                             Err(err) => {
