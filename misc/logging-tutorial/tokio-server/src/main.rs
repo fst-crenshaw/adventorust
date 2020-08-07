@@ -2,16 +2,18 @@ use futures::stream::StreamExt;
 use rand::Rng;
 use std::{thread, time};
 use tokio::net::TcpListener;
-use tracing::warn;
-use tracing::Level;
-use tracing_subscriber;
+use tracing::{info, warn};
+use tracing_subscriber::filter::EnvFilter;
+use tracing_subscriber::layer::Layer;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{fmt, reload, Registry};
 
 fn do_work(id: u8) {
     // doing "work"
     let rand_num = time::Duration::from_millis(rand::thread_rng().gen_range(0, 10));
     thread::sleep(rand_num);
 
-    warn!("sleep[{}]: {:?}", id, rand_num);
+    info!("sleep[{}]: {:?}", id, rand_num);
 }
 
 #[tokio::main]
@@ -19,10 +21,27 @@ async fn main() {
     let addr = "127.0.0.1:6142";
     let mut listener = TcpListener::bind(addr).await.unwrap();
 
-    let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::TRACE)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("no global suscriber has been set");
+    let filter = EnvFilter::from_default_env().add_directive("warn".parse().unwrap());
+
+    /* a subscriber is a collection of layers */
+    /* a filter is a layer */
+    /* a format is .. */
+    let (layer, _handle) = reload::Layer::new(filter);
+    let layer = layer.and_then(fmt::Layer::default());
+    /* Flame graph subscriber ?! How do I get one? */
+
+    /* a registry is where all the layers go */
+    /* a subscriber belongs to a registry because a registry is a part of a subscriber */
+
+    /* subscriber: register their interest and index all the call sites (warn!/trace!/etc)
+     * a single actor makes decisions so its consistent:
+     * at runtime the events you call with the callsites are relative to all the layers */
+
+    /* bc we can compose multiple subscribers, the registry takes care of callsite stuff.
+     * whenever an event happens it passes it along to each layer, so layers can 'subscribe' to
+     * the events that are happening */
+    let subscriber = layer.with_subscriber(Registry::default());
+    subscriber.init();
 
     // Here we convert the `TcpListener` to a stream of incoming connections
     // with the `incoming` method.
