@@ -21,7 +21,9 @@ async fn main() {
     let addr = "127.0.0.1:6142";
     let mut listener = TcpListener::bind(addr).await.unwrap();
 
-    let filter = EnvFilter::from_default_env().add_directive("warn".parse().unwrap());
+    let filter = EnvFilter::from_default_env()
+        .add_directive("error".parse().unwrap())
+        .add_directive("[{{id=1}}]=trace".parse().unwrap());
 
     /* a subscriber is a collection of layers */
     /* a filter is a layer */
@@ -75,7 +77,7 @@ async fn main() {
                             Ok(amt) => {
                                 do_work(id);
 
-                                let s = tracing::warn_span!("finished writing");
+                                let s = tracing::warn_span!("request", id = id, "finished writing");
                                 let _g = s.enter();
                                 let double = amt * 2;
                                 let squared = amt * amt;
